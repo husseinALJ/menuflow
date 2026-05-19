@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { withGuestInterceptor } from '@/lib/guestApi'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -7,21 +8,27 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Attach token on every request
+withGuestInterceptor(api)
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('sufra_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-// Handle 401 globally
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    if (err.config?.__guestMock) return Promise.resolve({ data: err.config.__guestMock })
+    if (err.config?.__guestBlocked) return Promise.resolve({ data: { status: 'guest_blocked' } })
     if (err.response?.status === 401) {
-      localStorage.removeItem('sufra_token')
-      localStorage.removeItem('sufra_user')
-      window.location.href = '/login'
+      import('@/store/guestStore').then(({ useGuestStore }) => {
+        if (!useGuestStore.getState().isGuest) {
+          localStorage.removeItem('sufra_token')
+          localStorage.removeItem('sufra_user')
+          window.location.href = '/login'
+        }
+      })
     }
     return Promise.reject(err)
   }
