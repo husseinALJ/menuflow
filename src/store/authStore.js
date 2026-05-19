@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
+import { useGuestStore, GUEST_ROLES } from '@/store/guestStore'
 
 export const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem('sufra_user') || 'null'),
@@ -13,11 +14,8 @@ export const useAuthStore = create((set, get) => ({
       const { data } = await api.post('/api/auth/login', { username, password })
       const user = data.data.user
       const token = data.token
-      // Fetch full user to get role — stored in token payload
-      // Decode role from jwt payload (base64)
       const payload = JSON.parse(atob(token.split('.')[1]))
       const enrichedUser = { ...user, role: payload.role }
-
       localStorage.setItem('sufra_token', token)
       localStorage.setItem('sufra_user', JSON.stringify(enrichedUser))
       set({ user: enrichedUser, token, loading: false })
@@ -29,9 +27,17 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  loginAsGuest: (role = 'Admin') => {
+    const guestUser = { id: 0, username: `guest_${role.toLowerCase()}`, role }
+    useGuestStore.getState().enterGuest(role)
+    set({ user: guestUser, token: 'guest' })
+    return guestUser
+  },
+
   logout: () => {
     localStorage.removeItem('sufra_token')
     localStorage.removeItem('sufra_user')
+    useGuestStore.getState().exitGuest()
     set({ user: null, token: null })
   },
 
