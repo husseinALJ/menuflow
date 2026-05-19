@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { useGuestStore } from '@/store/guestStore'
 import {
   LayoutDashboard, UtensilsCrossed, Tag, TableProperties,
   ClipboardList, Users, ChefHat, CreditCard, LogOut,
@@ -39,9 +40,17 @@ const ROLE_COLORS = {
 }
 
 export default function StaffLayout({ role }) {
-  const { user, logout } = useAuthStore()
+  const { user, logout, loginAsGuest } = useAuthStore()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { isGuest, setGuestRole } = useGuestStore()
+
+  const switchGuestRole = (role) => {
+  setGuestRole(role)
+  loginAsGuest(role)
+  const home = { Admin: '/admin', Chef: '/chef', Cashier: '/cashier', Waiter: '/cashier' }
+  navigate(home[role])
+  }
 
   const navItems = NAV[user?.role] || NAV[role] || []
 
@@ -82,6 +91,25 @@ export default function StaffLayout({ role }) {
             <span className="font-display text-xl text-surface-900">Sufra</span>
           </div>
         </div>
+
+        {/* Guest banner */}
+        {isGuest && (
+          <div className="mx-3 mt-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl">
+            <p className="text-xs font-semibold text-amber-700">Guest demo</p>
+            <p className="text-[11px] text-amber-600 mt-0.5">Read-only · changes are disabled</p>
+            <div className="mt-2 flex flex-wrap gap-1">
+              {['Admin','Chef','Cashier','Waiter'].filter(r => r !== user?.role).map(r => (
+                <button
+                  key={r}
+                  onClick={() => switchGuestRole(r)}
+                  className="text-[11px] px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-md transition-colors"
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">

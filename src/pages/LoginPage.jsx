@@ -5,7 +5,7 @@ import { UtensilsCrossed, Eye, EyeOff, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function LoginPage() {
-  const { login, loading, user } = useAuthStore()
+  const { login, loginAsGuest, loading, user } = useAuthStore()
   const navigate = useNavigate()
   const [form, setForm] = useState({ username: '', password: '' })
   const [showPw, setShowPw] = useState(false)
@@ -141,6 +141,38 @@ export default function LoginPage() {
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
+          <div className="mt-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-surface-700" />
+              <span className="text-xs text-surface-600 uppercase tracking-widest">or try a demo</span>
+              <div className="flex-1 h-px bg-surface-700" />
+            </div>
+            <p className="text-xs text-surface-500 text-center mb-3">
+              Explore the interface as any role — read-only, no account needed.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {['Admin', 'Chef', 'Cashier', 'Waiter'].map((role) => {
+                return (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => {
+                      const u = loginAsGuest(role)
+                      toast.success(`Viewing as ${role} (guest)`)
+                      const home = { Admin: '/admin', Chef: '/chef', Cashier: '/cashier', Waiter: '/cashier' }
+                      navigate(home[role] || '/admin')
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5
+                               bg-surface-800 hover:bg-surface-700 border border-surface-700
+                               text-surface-300 hover:text-white text-sm rounded-xl
+                               transition-all duration-200"
+                  >
+                    {role}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
