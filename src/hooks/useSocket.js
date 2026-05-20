@@ -20,6 +20,13 @@ export function useSocket(events = {}) {
   useEffect(() => {
     const socket = getSocket()
 
+    if (!user || user.username.split('_')[0] === 'guest') {
+      if (socket.connected) {
+        socket.disconnect()
+      }
+      return
+    }
+
     if (!socket.connected) {
       socket.connect()
       socket.on('connect', () => {
